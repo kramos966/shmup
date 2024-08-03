@@ -4,16 +4,14 @@ import math as m
 import random
 
 from .entities import Entity, EntityGroup
+from .spawners import BaseSpawner
 from .color import CKEY
 
 class Bullet(Entity):
-    def __init__(self, color: hex, position: pygame.math.Vector2 | list, speed=0.2):
+    def __init__(self, image: pygame.Surface, position: pygame.math.Vector2 | list,
+                 speed = 0.2, direction = (0, 1)):
         Entity.__init__(self)
-        self.image = pygame.Surface((8, 8)).convert()
-        self.image.set_colorkey(CKEY)
-        self.image.fill(CKEY)
-        pygame.draw.circle(self.image, color, (4, 4), 4)
-        pygame.draw.circle(self.image, 0xffffff, (4, 4), 2)
+        self.image = image
         self.rect = self.image.get_rect()
         self.rect.scale_by_ip(0.5)
         self.speed = speed
@@ -22,6 +20,7 @@ class Bullet(Entity):
         self.position = pygame.math.Vector2(position)
         self.rect.x = self.position.x
         self.rect.y = self.position.y
+        self.set_direction(direction)
 
     def set_direction(self, direction: list | tuple):
         self.direction.x = direction[0]
@@ -38,19 +37,36 @@ class Bullet(Entity):
             (self.position.y > clamp_reg.h)):
             self.kill()
 
-class BulletSpawner(pygame.sprite.Group):
+class BulletSpawner(BaseSpawner):
     """Bullet spawner, which creates and holds bullets from
     a single source."""
     
-    def __init__(self, size, color):
-        pygame.sprite.Group.__init__(self)
-        self.base_image = pygame.Surface(size).convert()
-        self.base_image.set_colorkey(CKEY)
-        self.base_image.fill(CKEY)
+    def __init__(self, size: tuple | list, color: hex | tuple | list, n_bullets = 1,
+                 spread_angle = 0.0):
+        BaseSpawner.__init__(sprite_size)
+        self._draw_sprite()
+        self.n_bullets = n_bullets
+        self.spread_angle = spread_angle #TODO: Write on a paper what you intend to do...
+        self.set_pattern(n_bullets, spread_angle)
 
-    def spawn(self):
-        """Spawn bullets according to the currently held pattern."""
-        pass
+
+    def _draw_sprite(self):
+        pygame.draw.circle(self.base_image, color, (4, 4), 4)
+        pygame.draw.circle(self.base_image, 0xffffff, (4, 4), 2)
+
+    def spawn(self, position: pygame.math.Vector2 | list | tuple, speed: float):
+        """Spawn bullets according to the currently held pattern at the given position."""
+        # FIXME: Only bullets emanating from a single point...
+        # Spawn bullets from position
+        for direction in self.directions:
+            bullet = Bullet(self.base_image, position, speed = speed, direction = direction)
+            self.add(bullet)
 
     def set_pattern(self, n_bullets: int, spread_angle: float):
-        pass
+        delta_alpha = spread_angle / n_bullets
+        self.directions = []
+        for i in range(n_bullets):
+            angle = -.5 * spread_angle + i * delta_alpha
+            self.directions.append(pygame.math.Vector2(m.sin(angle), m.cos(angle)))
+            
+                              
