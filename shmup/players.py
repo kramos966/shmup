@@ -4,11 +4,11 @@ import random
 import math as m
 
 from .entities import Entity, EntityGroup
-from .bullets import Bullet
+from .bullets import BulletSpawner
 from .color import CKEY
 
 class Player(Entity):
-    def __init__(self, bullets):
+    def __init__(self):
         Entity.__init__(self)
         self.image = pygame.Surface((16, 32)).convert()
         self.image.set_colorkey(CKEY)
@@ -19,13 +19,13 @@ class Player(Entity):
         self.speed = 1e-1
         self.position = pygame.Vector2(0, 0)
         self.direction = pygame.Vector2(0, 0)
-        self.bullets = bullets
-        self.bullet_cooldown = 200 # ms
+        self.bullet_spawner = BulletSpawner((8, 8), 0x9F2B68, n_bullets=1, spread_angle=0.0)
+        self.bullet_cooldown = 150 # ms
         self.bullet_shoot_time = self.bullet_cooldown + 1
         self.alive = False
         
-    def update(self, dt: int, keys: dict, clamp_reg: pygame.rect, enemies: EntityGroup,
-               bullets: EntityGroup):
+    def update(self, dt: int, keys: dict, clamp_reg: pygame.rect, enemies: EntityGroup):
+        self.bullet_spawner.update(dt, clamp_reg, enemies)
         self.bullet_shoot_time += dt
         self.direction.x = self.direction.y = 0
         if keys[pygame.K_UP]:
@@ -50,6 +50,7 @@ class Player(Entity):
         collision_list = pygame.sprite.spritecollide(self, enemies, False)
         if (any(collision_list)):
             self.alive = False
+        bullets = enemies.bullet_spawner
         bullet_collision = pygame.sprite.spritecollide(self, bullets, True)
         if (any(bullet_collision)):
             self.alive = False
@@ -64,5 +65,14 @@ class Player(Entity):
     def shoot(self) -> None:
         position = pygame.math.Vector2(self.position)
         position.y -= self.rect.h / 2
-        bullet = Bullet(0x9F2B68, position)
-        self.bullets.add(bullet)
+        # FIXME: Better encode bullet speed
+        b_speed = -0.2
+        self.bullet_spawner.spawn(position, b_speed)
+
+    def draw(self, surface: pygame.Surface):
+        # Draw ship and its bullets!
+        surface.blit(self.image, self.rect)
+        self.bullet_spawner.draw(surface)
+
+    def empty(self):
+        self.bullet_spawner.empty()

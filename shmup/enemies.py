@@ -6,12 +6,13 @@ from typing import Type
 
 from .entities import Entity, EntityGroup
 from .bullets import Bullet, BulletSpawner
+from .players import Player
 from .color import CKEY
 from .misc import sign
 from .events import TALLY_UP_EVENT
 
 class Enemy(Entity):
-    def __init__(self, position: list | pygame.math.Vector2, bullet_spawner: Type(BulletSpawner)):
+    def __init__(self, position: list | pygame.math.Vector2, bullet_spawner: BulletSpawner):
         Entity.__init__(self)
         self.position = pygame.math.Vector2(position)
         self.speed = 0.08
@@ -44,8 +45,7 @@ class Enemy(Entity):
             self.turn = -self.turn
         return accel
 
-    def update(self, dt: int | float, clamp_reg: pygame.rect, p_bullets: EntityGroup,
-               e_bullets: EntityGroup):
+    def update(self, dt: int | float, clamp_reg: pygame.rect, player: Player):
         self.turn_timer += dt
         super().update(dt)
         self.rect.x = self.position.x
@@ -54,6 +54,7 @@ class Enemy(Entity):
 
         if (self.rect.y > clamp_reg.h):
             self.kill()
+        p_bullets = player.bullet_spawner
         collided = pygame.sprite.spritecollide(self, p_bullets, True)
         if (any(collided)):
             self.kill()
@@ -61,22 +62,36 @@ class Enemy(Entity):
             pygame.event.post(TALLY_UP_EVENT)
         self.shoot_time += dt
 
-        self.shoot(e_bullets)
+        self.shoot()
 
-    def shoot(self, e_bullets: EntityGroup):
+    def shoot(self):
         if self.shoot_time >= self.shoot_timer:
             self.shoot_time = 0
             px = self.position.x + 4
             py = self.position.y + 8
-            sp = -0.1
+            sp = 0.10
 
-            self.bullet_spawner.spawn(position, sp)
+            self.bullet_spawner.spawn((px, py), sp)
 
 class BasicEnemySpawner(EntityGroup):
     """Spawner of basic enemies, ships that move to ad fro shooting three bullets."""
-    def __init__(self, size: tuple | list, color: hex | tuple | list):
+    def __init__(self, size: tuple | list, color: int | tuple | list):
         EntityGroup.__init__(self)
         self.base_image = pygame.Surface(size).convert()
+        self.bullet_spawner = BulletSpawner((8, 8), 0x00ffaa, 3, m.pi / 12)
 
-    def spawn(self):
-        pass
+    def spawn(self, position):
+        enemy = Enemy(position, self.bullet_spawner)
+        self.add(enemy)
+
+    def empty(self):
+        self.bullet_spawner.empty()
+        super().empty()
+
+    def update(self, *args, **kwargs):
+        self.bullet_spawner.update(*args, **kwargs)
+        super().update(*args, **kwargs)
+
+    def draw(self, surface: pygame.Surface):
+        super().draw(surface)
+        self.bullet_spawner.draw(surface)

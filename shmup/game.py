@@ -4,7 +4,7 @@ import random
 import math as m
 
 from .players import Player
-from .enemies import Enemy
+from .enemies import Enemy, BasicEnemySpawner
 from .bullets import Bullet
 from .entities import EntityGroup
 from .staticwindows import Scoreboard, MainTitle, RetryWindow
@@ -17,19 +17,21 @@ class Game:
         pygame.freetype.init()
         self.font = pygame.freetype.SysFont("DejaVu Sans", 12)
         self.window = pygame.display.set_mode(self.size, flags=pygame.SCALED)
-        self.player_bullets = EntityGroup()
-        self.player = Player(self.player_bullets)
-        self.player.move_to(self.width / 2, self.height * 4 / 5)
-        self.entities = EntityGroup(self.player)
-        self.enemies = EntityGroup()
-        self.enemy_bullets = EntityGroup()
+        
+        self.player = Player()
+        
+        self.enemies = BasicEnemySpawner((16, 16), 0xff7700)
         self.scoreboard = Scoreboard(self.font, 240, 32)
         self.title_screen = MainTitle(self.width, self.height)
         self.retry_window = RetryWindow(240, 64)
+
+        # Creating, at once, all screens in the game: Title, Retry, and playground
         self.retry_window.set_text("Retry? Press R", 0xffffff, center="center", size=12)
         self.retry_window.move_to((120, 160))
         self.title_screen.set_text(" SHMUP", 0xff68b2f9, center="upper")
         self.title_screen.set_text("Press ANY button", 0xffffffff, center="lower", size=16)
+
+        # Begin the game at state 0, main screen
         self.state = 0
         self.scoreboard.render_score()
         pygame.time.set_timer(ENEMY_SPAWN, 500)
@@ -37,10 +39,9 @@ class Game:
     def setup_game(self):
         self.scoreboard.clean_score()
         self.player.alive = True
-        self.enemy_bullets.empty()
-        self.player.move_to(self.width / 2, self.height * 4 / 5)
         self.enemies.empty()
-        self.player_bullets.empty()
+        self.player.move_to(self.width / 2, self.height * 4 / 5)
+        self.player.empty()
         self.state = 1
         
     def mainloop(self):
@@ -61,6 +62,7 @@ class Game:
                     self.quit()
                 elif event.type == pygame.KEYDOWN:
                     self.state = 1
+                    self.setup_game()
                     self.player.alive = True
                     self.scoreboard.clean_score()
           
@@ -70,8 +72,8 @@ class Game:
                     self.quit()
                 elif event.type == ENEMY_SPAWN:
                     if (self.player.alive):
-                        self.enemies.add(
-                            Enemy((random.randint(0, self.width-32), -self.height / 5)))
+                        self.enemies.spawn(
+                            (random.randint(0, self.width-32), -self.height / 5))
                 elif event.type == TALLY_UP:
                     self.scoreboard.update_score(1)
                 elif event.type == pygame.KEYDOWN:
@@ -96,10 +98,8 @@ class Game:
         elif self.state == 1:
             if (self.player.alive):
                 rect = self.window.get_rect() # Window region clamp
-                self.enemies.update(dt, rect, self.player_bullets, self.enemy_bullets)
-                self.entities.update(dt, keys, rect, self.enemies, self.enemy_bullets)
-                self.player_bullets.update(dt, rect, self.enemies)
-                self.enemy_bullets.update(dt, rect, self.entities)
+                self.enemies.update(dt, rect, self.player)
+                self.player.update(dt, keys, rect, self.enemies)
                 return
             # TODO: Reset state
             self.state = 2
@@ -115,10 +115,8 @@ class Game:
             self.title_screen.render_to(self.window)
             
         elif self.state == 1:
-            self.entities.draw(self.window)
+            self.player.draw(self.window)
             self.enemies.draw(self.window)
-            self.player_bullets.draw(self.window)
-            self.enemy_bullets.draw(self.window)
             # Score
             self.scoreboard.render_score()
             self.scoreboard.render_to(self.window)

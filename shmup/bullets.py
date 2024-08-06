@@ -27,7 +27,7 @@ class Bullet(Entity):
         self.direction.y = direction[1]
         self.velocity = self.speed * self.direction
 
-    def update(self, dt: int | float, clamp_reg: pygame.rect, colliders: EntityGroup):
+    def update(self, dt: int | float, clamp_reg: pygame.rect, entity: Entity):
         super().update(dt)
         self.rect.x = self.position.x
         self.rect.y = self.position.y
@@ -41,16 +41,15 @@ class BulletSpawner(BaseSpawner):
     """Bullet spawner, which creates and holds bullets from
     a single source."""
     
-    def __init__(self, size: tuple | list, color: hex | tuple | list, n_bullets = 1,
+    def __init__(self, size: tuple | list, color: int | tuple | list, n_bullets = 1,
                  spread_angle = 0.0):
-        BaseSpawner.__init__(sprite_size)
-        self._draw_sprite()
+        BaseSpawner.__init__(self, size)
+        self._draw_sprite(color)
         self.n_bullets = n_bullets
         self.spread_angle = spread_angle #TODO: Write on a paper what you intend to do...
         self.set_pattern(n_bullets, spread_angle)
 
-
-    def _draw_sprite(self):
+    def _draw_sprite(self, color):
         pygame.draw.circle(self.base_image, color, (4, 4), 4)
         pygame.draw.circle(self.base_image, 0xffffff, (4, 4), 2)
 
@@ -63,7 +62,10 @@ class BulletSpawner(BaseSpawner):
             self.add(bullet)
 
     def set_pattern(self, n_bullets: int, spread_angle: float):
-        delta_alpha = spread_angle / n_bullets
+        if n_bullets > 1:
+            delta_alpha = spread_angle / (n_bullets - 1)
+        else:
+            delta_alpha = 1
         self.directions = []
         for i in range(n_bullets):
             angle = -.5 * spread_angle + i * delta_alpha

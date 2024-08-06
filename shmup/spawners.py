@@ -8,7 +8,7 @@ from .color import CKEY
 class BaseSpawner(pygame.sprite.Group):
     def __init__(self, sprite_size: tuple | list):
         pygame.sprite.Group.__init__(self)
-        self.base_image = pygame.Surface(size).convert()
+        self.base_image = pygame.Surface(sprite_size).convert()
         self.base_image.set_colorkey(CKEY)
         self.base_image.fill(CKEY)
 
