@@ -31,6 +31,7 @@ class Enemy(Entity):
         self.turn_timer = 0
         self.turn = -sign(self.position.x - 120)
         self.turn_c = 0
+        self.HP = 4
 
         self.bullet_spawner = bullet_spawner
 
@@ -56,10 +57,11 @@ class Enemy(Entity):
             self.kill()
         p_bullets = player.bullet_spawner
         collided = pygame.sprite.spritecollide(self, p_bullets, True)
-        if (any(collided)):
-            self.kill()
-            # Send an event to update the score
-            pygame.event.post(TALLY_UP_EVENT)
+        for colision in collided:
+            self.HP -= 1
+            if self.HP <= 0:
+                self.kill()
+                pygame.event.post(TALLY_UP_EVENT)
         self.shoot_time += dt
 
         self.shoot()
