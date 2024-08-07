@@ -13,6 +13,7 @@ class Entity(pygame.sprite.Sprite):
         self.position = pygame.math.Vector2(0, 0) # Should be Vector2
         self._time = 0
         self.velocity = pygame.math.Vector2(0, 0)
+        self.sprites = {} # Dict with different sprites for different states of the Entity
 
     def clamp(self, clamp_reg):
         _, _, w, h = self.rect

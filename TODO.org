@@ -1,0 +1,14 @@
+* TODO Sprites i animacions
+Crea diferents sprites per a cadascun dels enemics i el jugador. El jugador, com a mínim, ha de tenir una petita animació del moviment lateral.
+
+* TODO Efectes sonors
+Crea un efecte de so, com a mínim, en tocar un enemic i en ésser tocat.
+
+* TODO Fons
+Crea un fons per al joc, per a donar-li una sensació d'espai més coherent.
+
+* TODO Diferents tipus d'enemics
+Enemics amb diferents patrons de bales i diferents moviments. Potser no cal que vagin cap al fons de la pantalla...?
+
+* Enemic final
+Crear un enemic final, una mostra final d'habilitat per al jugador.
