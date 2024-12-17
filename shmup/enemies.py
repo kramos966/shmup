@@ -18,8 +18,9 @@ class Enemy(Entity):
         self.speed = 0.08
         self.direction = pygame.math.Vector2(0, 1)
         self.velocity = self.direction * self.speed
-        self.image = pygame.Surface((16, 16)).convert()
-        self.image.set_colorkey(CKEY)
+        image = pygame.Surface((16, 16)).convert()
+        image.set_colorkey(CKEY)
+        self.image = image
         self.rect = self.image.get_rect()
         self.rect.scale_by_ip(0.8)
         self.shoot_timer = 800
@@ -31,6 +32,18 @@ class Enemy(Entity):
         self.turn_timer = 0
         self.turn = -sign(self.position.x - 120)
         self.turn_c = 0
+        self.HP = 4
+
+        self.damage_timer = 100
+        self.damage_time = 0
+        self.n_flash = 5
+        self.i_flash = 0
+        flash_image = pygame.Surface((16, 16)).convert()
+        flash_image.set_colorkey(CKEY)
+        pygame.draw.circle(flash_image, 0xffffff, (8, 8), 8)
+        self.sprites["damage"] = {0: image, 1: flash_image, "k": 0, "n": 2}
+        self.sprites["default"] = {0: image, "k": 0, "n": 1}
+        self.state = 0
 
         self.bullet_spawner = bullet_spawner
 
@@ -39,7 +52,7 @@ class Enemy(Entity):
         if self.turn_timer > self.turn_wait:
             # FIXME: This is absurd! You can turn by just assigning an initial turn speed
             # and swapping each timer count!!!!!!
-            accel.x = self.turn * self.velocity.y * 1 - self.velocity.x
+            self.velocity.x = self.turn * self.speed
             self.turn_timer = 0
             self.turn_c += 1
             self.turn = -self.turn
@@ -56,14 +69,40 @@ class Enemy(Entity):
             self.kill()
         p_bullets = player.bullet_spawner
         collided = pygame.sprite.spritecollide(self, p_bullets, True)
-        if (any(collided)):
-            self.kill()
-            # Send an event to update the score
-            pygame.event.post(TALLY_UP_EVENT)
+        if collided:
+            self.state = 2
+            for colision in collided:
+                self.HP -= 1
+                if self.HP <= 0:
+                    self.kill()
+                    pygame.event.post(TALLY_UP_EVENT)
+        if self.state == 2:
+            self.on_hit(dt)
         self.shoot_time += dt
 
         self.shoot()
 
+    def on_hit(self, dt: int):
+        damage_dict = self.sprites["damage"]
+        if self.i_flash <= self.n_flash:
+            self.damage_time += dt
+            if self.damage_time >= self.damage_timer:
+                self.damage_time = 0
+                self.i_flash += 1
+                n_current = damage_dict["k"]
+                n_max = damage_dict["n"]
+
+                n_current += 1
+                if n_current >= n_max:
+                    n_current = 0
+                damage_dict["k"] = n_current
+            n_current = damage_dict["k"]
+            self.image = damage_dict[n_current]
+        else:
+            self.state = 0
+            self.i_flash = 0
+            self.image = self.sprites["default"][0]
+            
     def shoot(self):
         if self.shoot_time >= self.shoot_timer:
             self.shoot_time = 0

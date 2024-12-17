@@ -1,5 +1,6 @@
 import pygame
 import pygame.freetype
+import pygame.mixer
 import random
 import math as m
 
@@ -15,8 +16,11 @@ class Game:
         self.width, self.height = self.size = (width, height)
         pygame.init()
         pygame.freetype.init()
+        pygame.mixer.init()
         self.font = pygame.freetype.SysFont("DejaVu Sans", 12)
         self.window = pygame.display.set_mode(self.size, flags=pygame.SCALED)
+
+        self.bgmusic = pygame.mixer.Sound("media/third.wav")
         
         self.player = Player()
         
@@ -42,6 +46,7 @@ class Game:
         self.enemies.empty()
         self.player.move_to(self.width / 2, self.height * 4 / 5)
         self.player.empty()
+        self.bgmusic.play(loops=-1)
         self.state = 1
         
     def mainloop(self):
@@ -103,6 +108,7 @@ class Game:
                 return
             # TODO: Reset state
             self.state = 2
+            self.bgmusic.stop()
             self.retry_window.set_bg(self.window.copy())
         # Restart screen
         # TODO

@@ -19,7 +19,7 @@ class Player(Entity):
         self.speed = 1e-1
         self.position = pygame.Vector2(0, 0)
         self.direction = pygame.Vector2(0, 0)
-        self.bullet_spawner = BulletSpawner((8, 8), 0x9F2B68, n_bullets=1, spread_angle=0.0)
+        self.bullet_spawner = BulletSpawner((8, 8), 0x9F2B68, n_bullets=3, spread_angle=m.pi/6)
         self.bullet_cooldown = 150 # ms
         self.bullet_shoot_time = self.bullet_cooldown + 1
         self.alive = False
